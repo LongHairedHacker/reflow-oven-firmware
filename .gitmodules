@@ -1,0 +1,3 @@
+[submodule "avr-st7735"]
+	path = avr-st7735
+	url = git@github.com:LongHairedHacker/avr-st7735.git
