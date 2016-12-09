@@ -6,7 +6,7 @@
 #include "st7735_gfx.h"
 #include "st7735_font.h"
 
-#include "logo_bw.h"
+//#include "logo_bw.h"
 
 #include "free_sans.h"
 
@@ -41,7 +41,7 @@ uint16_t interpolate_profile(uint16_t t) {
 
 void splash_screen(void) {
     st7735_fill_rect(0, 0, 160, 128, ST7735_COLOR_BLACK);
-    st7735_draw_mono_bitmap(16, 4, &logo_bw, ST7735_COLOR_WHITE, ST7735_COLOR_BLACK);
+    //st7735_draw_mono_bitmap(16, 4, &logo_bw, ST7735_COLOR_WHITE, ST7735_COLOR_BLACK);
     _delay_ms(2000);
 }
 
@@ -52,15 +52,41 @@ void draw_plot_template(void) {
         st7735_draw_fast_hline(0, y, 160, st7735_color(128,128,128));
     }
 
-    for(uint8_t x = 10; x < 160; x+=10) {
+    for(uint8_t x = 15; x < 160; x+=15) {
         st7735_draw_fast_vline(x, 20, 128, st7735_color(128,128,128));
     }
 
     for(uint8_t t = 0; t < 160; t++) {
         uint16_t temp = interpolate_profile(t * 2);
 
-        st7735_draw_pixel(t, 127 - (temp / 250), ST7735_COLOR_CYAN);
+        st7735_draw_pixel(t, 127 - (temp / 250), ST7735_COLOR_GREEN);
     }
+}
+
+void format_temp(uint16_t temp, char *buffer) {
+    uint16_t a = temp % 100;
+    uint16_t b = temp / 100;
+    snprintf(buffer, 7, "%0.3d.%0.2d", b, a);
+}
+
+void update_plot(uint16_t t, uint16_t temp) {
+    char tmp[7];
+    tmp[0] = 0;
+
+    st7735_fill_rect(0, 0, 80, 20, ST7735_COLOR_BLACK);
+    format_temp(temp, tmp);
+    st7735_draw_text(5, 15, tmp, &FreeSans, 1, ST7735_COLOR_RED);
+
+    st7735_fill_rect(80, 0, 80, 20, ST7735_COLOR_BLACK);
+    format_temp(interpolate_profile(t), tmp);
+    st7735_draw_text(80, 15, tmp, &FreeSans, 1, ST7735_COLOR_GREEN);
+
+    for(uint8_t x = 15; x < 160; x+=15) {
+        st7735_draw_fast_vline(x, 20, 28, st7735_color(128,128,128));
+    }
+    st7735_draw_fast_vline(t / 2, 20, 8, ST7735_COLOR_CYAN);
+
+    st7735_draw_pixel(t / 2, 127 - (temp / 250), ST7735_COLOR_RED);
 }
 
 
@@ -73,6 +99,11 @@ int main(void) {
     splash_screen();
 
     draw_plot_template();
+
+    for(uint16_t t = 0; t < 320; t++) {
+        update_plot(t, 2200);
+        _delay_ms(1000);
+    }
 
 
     while(1);
